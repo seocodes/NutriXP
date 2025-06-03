@@ -9,8 +9,6 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-
-// importa tudo 
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../services/firebaseConfig';
 import CustomButton from '../components/CustomButton';
@@ -30,11 +28,13 @@ const LoginScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigation.replace('Dashboard');
+      console.log('Tentando fazer login...');
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Login bem sucedido:', userCredential);
+      navigation.navigate('Dashboard');
     } catch (error) {
+      console.error('Erro no login:', error);
       Alert.alert('Erro', 'Email ou senha inválidos');
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -42,8 +42,8 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.logoContainer}>
         <Text style={styles.logoText}>NutriXP</Text>

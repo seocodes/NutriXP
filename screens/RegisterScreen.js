@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../services/firebaseConfig';
 import CustomButton from '../components/CustomButton';
 
@@ -33,11 +33,12 @@ const RegisterScreen = ({ navigation }) => {
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Criar documento do usuário no Firestore
+      console.log(userCredential);
+
+      // cria o doc do user no firestore
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email: email,
-        createdAt: new Date().toISOString(),
+        createdAt: serverTimestamp(),
         profileCompleted: false,
       });
 
@@ -58,7 +59,6 @@ const RegisterScreen = ({ navigation }) => {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>

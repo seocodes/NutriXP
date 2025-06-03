@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,8 +11,48 @@ import { auth } from './services/firebaseConfig';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import DashboardScreen from './screens/DashboardScreen';
+import ChatScreen from './screens/ChatScreen';
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          if (route.name === 'Dashboard') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Chat') {
+            iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#4CAF50',
+        tabBarInactiveTintColor: 'gray',
+        headerShown: false,
+      })}
+    >
+      <Tab.Screen 
+        name="Dashboard" 
+        component={DashboardScreen} 
+        options={{
+          title: 'Dashboard',
+        }}
+      />
+      <Tab.Screen 
+        name="Chat" 
+        component={ChatScreen} 
+        options={{
+          title: 'Chat',
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
 
 export default function App() {
   const handleLogout = async (navigation) => {
@@ -49,10 +90,11 @@ export default function App() {
           options={{ title: 'Cadastro' }}
         />
         <Stack.Screen 
-          name="Dashboard" 
-          component={DashboardScreen} 
+          name="MainTabs" 
+          component={MainTabs} 
           options={({ navigation }) => ({
-            title: 'Dashboard',
+            headerShown: true,
+            title: 'NutriXP',
             headerLeft: () => null,
             headerRight: () => (
               <TouchableOpacity

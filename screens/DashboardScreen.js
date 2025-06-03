@@ -5,6 +5,9 @@ import { auth } from '../services/firebaseConfig';
 import CustomButton from '../components/CustomButton';
 import { doc, getDoc, enableNetwork, disableNetwork } from 'firebase/firestore';
 import { db } from '../services/firebaseConfig';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+
+const Tab = createBottomTabNavigator();
 
 const DashboardScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(true);

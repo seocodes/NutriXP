@@ -31,7 +31,7 @@ const LoginScreen = ({ navigation }) => {
       console.log('Tentando fazer login...');
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log('Login bem sucedido:', userCredential);
-      navigation.navigate('Dashboard');
+      navigation.navigate('MainTabs');
     } catch (error) {
       console.error('Erro no login:', error);
       Alert.alert('Erro', 'Email ou senha inválidos');
@@ -46,8 +46,7 @@ const LoginScreen = ({ navigation }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.logoContainer}>
-        <Text style={styles.logoText}>NutriXP</Text>
-        <Text style={styles.subtitle}>Seu assistente de treino e dieta</Text>
+        <Image source={require('../assets/logo.png')} style={styles.logo} />
       </View>
 
       <View style={styles.formContainer}>
@@ -95,6 +94,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  logo: {
+    height: 100,
+    width: '80%',
+    resizeMode: 'contain',
+    marginBottom: 30,
   },
   logoText: {
     fontSize: 48,

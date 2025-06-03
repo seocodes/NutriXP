@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert, Image } from 'react-native';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebaseConfig';
 import CustomButton from '../components/CustomButton';
@@ -69,13 +69,15 @@ const DashboardScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.welcomeText}>Bem-vindo ao NutriXP!</Text>
-      <Text style={styles.emailText}>Nome: {userData?.name || 'Carregando...'}</Text>
+      <Image source={require('../assets/logo.png')} style={styles.logo} />
+      <Text style={styles.welcomeText}>Bem-vindo {userData?.name || 'Carregando...'}!</Text>
       {isLoading && <Text style={styles.loadingText}>Carregando dados...</Text>}
       
       <View style={styles.card}>
+    
         <Text style={styles.cardTitle}>Atividade recente</Text>
-        // aqui ele vai pegar as atividades recentes do usuário
+        
+        <Text style={styles.cardText}>{userData?.recentActivity || 'Nenhuma atividade recente'}</Text>
       </View>
     </View>
   );
@@ -88,7 +90,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  welcomeText: {
+  logo: {
+    height: 60,
+    width: '80%',
+    resizeMode: 'contain',
+    marginBottom: 20,
+  },
+    welcomeText: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,

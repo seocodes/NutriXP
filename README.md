@@ -43,8 +43,8 @@ yarn install
 3. Crie um banco de dados Firestore.
 4. Obtenha as configurações do Firebase e substitua no arquivo `firebaseConfig.ts`:
 
-```typescript
-// src/config/firebaseConfig.ts
+```javascript
+// src/config/firebaseConfig.js
 export const firebaseConfig = {
   apiKey: 'SUA_API_KEY',
   authDomain: 'SEU_AUTH_DOMAIN',
@@ -61,8 +61,8 @@ export const firebaseConfig = {
 2. Obtenha sua chave pública de teste.
 3. Substitua no arquivo `stripeConfig.ts`:
 
-```typescript
-// src/config/stripeConfig.ts
+```javascript
+// src/config/stripeConfig.js
 export const STRIPE_PUBLISHABLE_KEY = 'SUA_CHAVE_PÚBLICA_DE_TESTE';
 ```
 
@@ -106,15 +106,13 @@ Para mais detalhes sobre a integração, consulte a [documentação oficial do S
 
 ```
 NutriXP/
-├── android/
-├── ios/
 ├── src/
 │   ├── components/
 │   ├── config/
 │   ├── screens/
 │   ├── services/
 │   └── utils/
-├── App.tsx
+├── App.jsx
 ├── firebase.json
 ├── package.json
 └── README.md

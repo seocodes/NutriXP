@@ -15,6 +15,7 @@ import CustomButton from '../components/CustomButton';
 
 const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,11 +39,21 @@ const RegisterScreen = ({ navigation }) => {
       // cria o doc do user no firestore
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email: email,
+        name: name,
         createdAt: serverTimestamp(),
         profileCompleted: false,
       });
 
-      navigation.replace('Profile');
+      Alert.alert(
+        'Sucesso!',
+        'Conta criada com sucesso! Você será redirecionado para a tela de login.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.replace('Login')
+          }
+        ]
+      );
     } catch (error) {
       let errorMessage = 'Erro ao criar conta';
       if (error.code === 'auth/email-already-in-use') {
@@ -63,6 +74,14 @@ const RegisterScreen = ({ navigation }) => {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.formContainer}>
+        <TextInput
+            style={styles.input}
+            placeholder="Seu nome"
+            value={name}
+            onChangeText={setName}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
           <TextInput
             style={styles.input}
             placeholder="Email"

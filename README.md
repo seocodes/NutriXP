@@ -15,7 +15,7 @@ O NutriXP é um aplicativo desenvolvido com React Native que utiliza Inteligênc
 - Cloud Firestore
 - Stripe React Native SDK
 - Firebase Cloud Functions
-- TypeScript
+- JavaScritp
 
 ## 📦 Instalação
 

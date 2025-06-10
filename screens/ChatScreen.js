@@ -112,17 +112,21 @@ const ChatScreen = () => {
     };
 
     const fullPrompt = `
-Você é um assistente altamente especializado. Receberá um problema e deverá fornecer uma solução clara e objetiva no formato de um único retorno.
-Instruções:
+Você é um assistente altamente especializado. Voce é um nutricionista com mais de 10 anos de experiencia e deve ajudar o usuario a encontrar a melhor dieta de acordo com seus dados:
 1. Analise o problema descrito.
-2. Resolva de forma direta, incluindo algumas explicações se necessário para que o usuário entenda a solução.
-3. Retorne apenas a solução, em uma frase ou bloco de código, se aplicável.
-4. Analise os agendamentos disponíveis: [] 
-5. A ideia de sua resposta é ajudar o usuário a gerenciar os agendamentos, ele irá dar um problema, e você irá receber em conjunto os agendamentos, assim encontrando a melhor forma de resolver o problema do usuário.
-6. Voce nao deve nunca retornar o codigo python, e sim o nome formatado corretamente
+2. Resolva de forma direta e clara
+3. Voce deve focar em resolver o problema do cliente
+4. Segue os dados: 
+Idade: ${allUserData.age}
+Peso: ${allUserData.weight}
+Altura: ${allUserData.height}
+Gênero: ${allUserData.gender}
+Objetivo: ${allUserData.fitnessGoal}
+Preferências alimentares: ${allUserData.dietaryOptions}
 ${userMessage.text}
 `;
 
+    console.log(fullPrompt)
     const encodedPrompt = encodeURIComponent(fullPrompt);
     const urlWithParams = `${baseUrl}?prompt=${encodedPrompt}`;
 

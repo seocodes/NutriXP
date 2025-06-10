@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebaseConfig';
 import CustomButton from '../components/CustomButton';
-import { doc, getDoc, enableNetwork, disableNetwork } from 'firebase/firestore';
+import { doc, getDoc, enableNetwork, disableNetwork, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebaseConfig';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
@@ -12,6 +12,7 @@ const Tab = createBottomTabNavigator();
 const DashboardScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState(null);
+  const [messages, setMessages] = useState([]);
 
   // aqui ele vai pegar os dados do usuário quando ele entrar na tela de acordo com o auth e o firestore
   useEffect(() => {
@@ -72,6 +73,31 @@ const DashboardScreen = ({ navigation }) => {
     };
   }, []);
 
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user) {
+      const q = query(
+        collection(db, 'chatMessages'), 
+        orderBy('timestamp', 'desc') // ordenar por mais recente primeiro
+      );
+      
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const fetchedMessages = [];
+        snapshot.forEach((doc) => {
+          // apenas add mensagens do próprio user
+          if (doc.data().userId === user.uid) {
+            fetchedMessages.push({ id: doc.id, ...doc.data() });
+          }
+        });
+        setMessages(fetchedMessages.slice(0, 5)); // limitar a 5 mensagens mais recentes
+      }, (error) => {
+        console.error("Error fetching chat messages:", error);
+      });
+
+      return () => unsubscribe();
+    }
+  }, []);
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -82,8 +108,31 @@ const DashboardScreen = ({ navigation }) => {
     }
   };
 
+  const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const MessageCard = ({ message }) => (
+    <View style={styles.messageCard}>
+      <Text style={styles.messageText} numberOfLines={2}>
+        {message.text || message.content || 'Mensagem sem texto'}
+      </Text>
+      <Text style={styles.messageDate}>
+        {formatDate(message.timestamp)}
+      </Text>
+    </View>
+  );
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.container}>
       <Image source={require('../assets/logo.png')} style={styles.logo} />
       <Text style={styles.welcomeText}>Bem-vindo {userData?.name || 'Carregando...'}!</Text>
       {isLoading && <Text style={styles.loadingText}>Carregando dados...</Text>}
@@ -103,18 +152,29 @@ const DashboardScreen = ({ navigation }) => {
       )}
       
       <View style={styles.card}>
-    
         <Text style={styles.cardTitle}>Atividade recente</Text>
         
-        <Text style={styles.cardText}>{userData?.recentActivity || 'Nenhuma atividade recente'}</Text>
+        {messages.length > 0 ? (
+  messages.map((message, index) =>
+    message.sender === "ai" ? (
+      <MessageCard key={message.id || index} message={message} />
+    ) : null
+  )
+) : (
+  <Text style={styles.cardText}>Nenhuma atividade recente</Text>
+)}
+
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  scrollContainer: {
     flex: 1,
+  },
+  container: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -125,7 +185,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     marginBottom: 20,
   },
-    welcomeText: {
+  welcomeText: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
@@ -164,6 +224,31 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 15,
+  },
+  cardText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  messageCard: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: '#4CAF50',
+  },
+  messageText: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 5,
+  },
+  messageDate: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'right',
   },
   profilePromptCard: {
     backgroundColor: '#FFD700',
@@ -195,4 +280,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DashboardScreen; 
+export default DashboardScreen;

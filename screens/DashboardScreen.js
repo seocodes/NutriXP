@@ -6,6 +6,7 @@ import CustomButton from '../components/CustomButton';
 import { doc, getDoc, enableNetwork, disableNetwork, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebaseConfig';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Modal } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 
@@ -13,6 +14,8 @@ const DashboardScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   // aqui ele vai pegar os dados do usuário quando ele entrar na tela de acordo com o auth e o firestore
   useEffect(() => {
@@ -32,7 +35,7 @@ const DashboardScreen = ({ navigation }) => {
 
           try {
             await enableNetwork(db);
-            
+
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if (userDoc.exists()) {
               const data = userDoc.data();
@@ -77,10 +80,10 @@ const DashboardScreen = ({ navigation }) => {
     const user = auth.currentUser;
     if (user) {
       const q = query(
-        collection(db, 'chatMessages'), 
+        collection(db, 'chatMessages'),
         orderBy('timestamp', 'desc') // ordenar por mais recente primeiro
       );
-      
+
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const fetchedMessages = [];
         snapshot.forEach((doc) => {
@@ -120,23 +123,24 @@ const DashboardScreen = ({ navigation }) => {
     });
   };
 
-  const MessageCard = ({ message }) => (
-    <View style={styles.messageCard}>
+  const MessageCard = ({ message, onPress }) => (
+    <TouchableOpacity onPress={() => onPress(message)} style={styles.messageCard}>
       <Text style={styles.messageText} numberOfLines={2}>
         {message.text || message.content || 'Mensagem sem texto'}
       </Text>
       <Text style={styles.messageDate}>
         {formatDate(message.timestamp)}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
+
 
   return (
     <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.container}>
       <Image source={require('../assets/logo.png')} style={styles.logo} />
       <Text style={styles.welcomeText}>Bem-vindo {userData?.name || 'Carregando...'}!</Text>
       {isLoading && <Text style={styles.loadingText}>Carregando dados...</Text>}
-      
+
       {!isLoading && userData && !userData.profileCompleted && (
         <View style={styles.profilePromptCard}>
           <Text style={styles.profilePromptText}>
@@ -150,26 +154,77 @@ const DashboardScreen = ({ navigation }) => {
           />
         </View>
       )}
-      
+
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Atividade recente</Text>
-        
+
         {messages.length > 0 ? (
-  messages.map((message, index) =>
-    message.sender === "ai" ? (
-      <MessageCard key={message.id || index} message={message} />
-    ) : null
-  )
-) : (
-  <Text style={styles.cardText}>Nenhuma atividade recente</Text>
-)}
+          messages.map((message, index) =>
+            message.sender === "ai" ? (
+              <MessageCard
+                key={message.id || index}
+                message={message}
+                onPress={(msg) => {
+                  setSelectedMessage(msg);
+                  setModalVisible(true);
+                }}
+              />
+            ) : null
+          )
+        ) : (
+          <Text style={styles.cardText}>Nenhuma atividade recente</Text>
+        )}
+
 
       </View>
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Mensagem Completa</Text>
+            <ScrollView>
+              <Text style={styles.modalText}>{selectedMessage?.text || selectedMessage?.content}</Text>
+            </ScrollView>
+            <CustomButton title="Fechar" onPress={() => setModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
+
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#333',
+    backgroundColor: "#d1d1d1",
+    padding: 12,
+    marginBottom: 12,
+    borderRadius: 12,
+  },
   scrollContainer: {
     flex: 1,
   },

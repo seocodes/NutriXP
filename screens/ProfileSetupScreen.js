@@ -33,15 +33,21 @@ const ProfileSetupScreen = ({ navigation }) => {
     try {
       const user = auth.currentUser;
       if (user) {
+        // sava no doc dos users
         await setDoc(doc(db, 'users', user.uid), {
           age: parseInt(age),
           weight: parseFloat(weight),
           height: parseFloat(height),
           gender: gender,
           fitnessGoal: fitnessGoal,
-          dietaryOptions: dietaryOptions,
           profileCompleted: true,
-        }, { merge: true }); // merge: atualiza o documento existente sem sobrescrever outros campos
+        }, { merge: true });
+
+        // se ele salvar ele edita la e adciona esses dados
+        await setDoc(doc(db, 'userDietaryInfo', user.uid), {
+          dietaryOptions: dietaryOptions,
+        }, { merge: true });
+
         Alert.alert('Sucesso', 'Seu perfil foi salvo com sucesso!');
         navigation.replace('MainTabs');
       } else {
@@ -54,7 +60,7 @@ const ProfileSetupScreen = ({ navigation }) => {
       setLoading(false);
     }
   };
- // assim que ele entra na tela, ele pega os dados do usuario e preenche os campos
+
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
@@ -68,7 +74,12 @@ const ProfileSetupScreen = ({ navigation }) => {
             setHeight(userData.height ? String(userData.height) : '');
             setGender(userData.gender || '');
             setFitnessGoal(userData.fitnessGoal || '');
-            setDietaryOptions(userData.dietaryOptions || '');
+          }
+
+         const dietaryDoc = await getDoc(doc(db, 'userDietaryInfo', user.uid));
+          if (dietaryDoc.exists()) {
+            const dietaryData = dietaryDoc.data();
+            setDietaryOptions(dietaryData.dietaryOptions || '');
           }
         }
       } catch (error) {

@@ -3,10 +3,11 @@ import { View, Text, TextInput, Button, StyleSheet, ActivityIndicator, ScrollVie
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebaseConfig';
 import Markdown from 'react-native-markdown-display';
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
 
 const ChatScreen = () => {
   const [prompt, setPrompt] = useState('');
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(["Pergunte suas dietas aqui",]);
   const [loading, setLoading] = useState(false);
   const [age, setAge] = useState('');
   const [weight, setWeight] = useState('');
@@ -23,32 +24,6 @@ const ChatScreen = () => {
     dietaryOptions: ''
   });
 
-  const handleSaveProfile = async () => {
-    if (!age || !weight || !height || !gender || !fitnessGoal || !dietaryOptions) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const user = auth.currentUser;
-      if (user) {
-        await setDoc(doc(db, 'dietas', user.uid), {
-          
-        }; // merge: atualiza o documento existente sem sobrescrever outros campos
-        Alert.alert('Sucesso', 'Seu perfil foi salvo com sucesso!');
-        navigation.replace('MainTabs');
-      } else {
-        Alert.alert('Erro', 'Usuário não autenticado.');
-      }
-    } catch (error) {
-      console.error('Erro ao salvar perfil:', error);
-      Alert.alert('Erro', 'Não foi possível salvar seu perfil. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
@@ -66,7 +41,7 @@ const ChatScreen = () => {
               fitnessGoal: userData.fitnessGoal || '',
               dietaryOptions: userData.dietaryOptions || ''
             });
-            
+
           }
         }
       } catch (error) {
@@ -77,22 +52,63 @@ const ChatScreen = () => {
     fetchProfileData();
   }, []);
 
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user) {
+      const q = query(collection(db, 'chatMessages'), orderBy('timestamp'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const fetchedMessages = [];
+        snapshot.forEach((doc) => {
+          // apenas add mensagens do proprio user
+          if (doc.data().userId === user.uid) {
+            fetchedMessages.push(doc.data());
+          }
+        });
+        setMessages(fetchedMessages);
+      }, (error) => {
+        console.error("Error fetching chat messages:", error);
+      });
+
+      return () => unsubscribe();
+    }
+  }, []);
+
   const handleSend = async () => {
     if (!prompt.trim()) {
       Alert.alert('Por favor', 'Digite uma pergunta antes de enviar.');
       return;
     }
 
-    const userMessage = { text: prompt, sender: 'user' };
-    setMessages(prevMessages => [...prevMessages, userMessage]);
-    setPrompt('');
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert('Erro', 'Usuário não autenticado. Por favor, faça login novamente.');
+      return;
+    }
 
+    const userMessage = {
+      text: prompt,
+      sender: 'user',
+      userId: user.uid, 
+      timestamp: serverTimestamp(),
+    };
+
+    // Add mensagem do user no db
+    try {
+      await addDoc(collection(db, 'chatMessages'), userMessage);
+    } catch (firestoreError) {
+      console.error('Erro ao salvar mensagem do usuário no Firestore:', firestoreError);
+      Alert.alert('Erro', 'Não foi possível enviar sua mensagem. Tente novamente.');
+      setLoading(false); 
+      return;
+    }
+
+    setPrompt('');
     setLoading(true);
 
     const baseUrl = "https://free-chatgpt-api.p.rapidapi.com/chat-completion-one";
     const headers = {
-        "x-rapidapi-key": "c9d143c772mshdec85ce6360dd14p1e7d84jsn9a29e0f400f1", // Note: Hardcoding API keys is not recommended for production.
-        "x-rapidapi-host": "free-chatgpt-api.p.rapidapi.com"
+      "x-rapidapi-key": "c9d143c772mshdec85ce6360dd14p1e7d84jsn9a29e0f400f1",
+      "x-rapidapi-host": "free-chatgpt-api.p.rapidapi.com"
     };
 
     const fullPrompt = `
@@ -101,52 +117,58 @@ Instruções:
 1. Analise o problema descrito.
 2. Resolva de forma direta, incluindo algumas explicações se necessário para que o usuário entenda a solução.
 3. Retorne apenas a solução, em uma frase ou bloco de código, se aplicável.
-4. Analise os agendamentos disponíveis: [] // Placeholder for agendamentos_str, as we don't have this data here yet.
+4. Analise os agendamentos disponíveis: [] 
 5. A ideia de sua resposta é ajudar o usuário a gerenciar os agendamentos, ele irá dar um problema, e você irá receber em conjunto os agendamentos, assim encontrando a melhor forma de resolver o problema do usuário.
 6. Voce nao deve nunca retornar o codigo python, e sim o nome formatado corretamente
-7. Esses são todos os dados do usuário:
-Idade: ${allUserData.age}
-Peso: ${allUserData.weight}
-Altura: ${allUserData.height}
-Gênero: ${allUserData.gender}
-Objetivo: ${allUserData.fitnessGoal}
-Preferências alimentares: ${allUserData.dietaryOptions}
 ${userMessage.text}
 `;
-
-    console.log(fullPrompt)
 
     const encodedPrompt = encodeURIComponent(fullPrompt);
     const urlWithParams = `${baseUrl}?prompt=${encodedPrompt}`;
 
     try {
-        const response = await fetch(urlWithParams, {
-            method: 'GET',
-            headers: headers,
-        });
+      const response = await fetch(urlWithParams, {
+        method: 'GET',
+        headers: headers,
+      });
 
-        console.log('Status Code:', response.status);
-        const data = await response.json();
-        console.log('Response Data:', data);
-        
-        let aiResponseText;
-        if (response.ok) {
-            aiResponseText = data.response || 'Não foi possível obter uma resposta válida.';
-        } else {
-            aiResponseText = `Erro da API: ${data.message || data.error || response.status}`;
-        }
-        setMessages(prevMessages => [...prevMessages, { text: aiResponseText, sender: 'ai' }]);
+      console.log('Status Code:', response.status);
+      const data = await response.json();
+      console.log('Response Data:', data);
+
+      let aiResponseText;
+      if (response.ok) {
+        aiResponseText = data.response || 'Não foi possível obter uma resposta válida.';
+      } else {
+        aiResponseText = `Erro da API: ${data.message || data.error || response.status}`;
+      }
+
+      const aiMessage = {
+        text: aiResponseText,
+        sender: 'ai',
+        userId: user.uid, 
+        timestamp: serverTimestamp(), 
+      };
+
+      // adciona a mensagem pro db
+      await addDoc(collection(db, 'chatMessages'), aiMessage);
 
     } catch (error) {
-        console.error('Erro ao chamar a API:', error);
-        setMessages(prevMessages => [...prevMessages, { text: 'Erro ao comunicar com o servidor.', sender: 'ai' }]);
+      console.error('Erro ao chamar a API ou salvar mensagem do AI:', error);
+      const errorMessage = {
+        text: 'Erro ao comunicar com o servidor.',
+        sender: 'ai',
+        userId: user.uid,
+        timestamp: serverTimestamp(),
+      };
+      await addDoc(collection(db, 'chatMessages'), errorMessage); //caso de erro ne
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
@@ -155,7 +177,7 @@ ${userMessage.text}
         {messages.map((message, index) => (
           <View key={index} style={message.sender === 'user' ? styles.userMessageContainer : styles.aiMessageContainer}>
             <Text style={message.sender === 'user' ? styles.userMessageText : styles.aiMessageText}>
-            <Markdown>
+              <Markdown>
               {message.text}
               </Markdown>
             </Text>
@@ -177,9 +199,9 @@ ${userMessage.text}
           onChangeText={setPrompt}
           editable={!loading}
         />
-        <Button 
-          title={loading ? "Enviando..." : "Enviar"} 
-          onPress={handleSend} 
+        <Button
+          title={loading ? "Enviando..." : "Enviar"}
+          onPress={handleSend}
           disabled={loading}
         />
       </View>

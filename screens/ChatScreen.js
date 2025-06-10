@@ -3,7 +3,7 @@ import { View, Text, TextInput, Button, StyleSheet, ActivityIndicator, ScrollVie
 
 const ChatScreen = () => {
   const [prompt, setPrompt] = useState('');
-  const [response, setResponse] = useState('Aguardando sua pergunta...');
+  const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const handleSend = async () => {
@@ -12,17 +12,18 @@ const ChatScreen = () => {
       return;
     }
 
+    const userMessage = { text: prompt, sender: 'user' };
+    setMessages(prevMessages => [...prevMessages, userMessage]);
+    setPrompt('');
+
     setLoading(true);
-    setResponse('Pensando...');
 
     const baseUrl = "https://free-chatgpt-api.p.rapidapi.com/chat-completion-one";
     const headers = {
         "x-rapidapi-key": "c9d143c772mshdec85ce6360dd14p1e7d84jsn9a29e0f400f1", // Note: Hardcoding API keys is not recommended for production.
         "x-rapidapi-host": "free-chatgpt-api.p.rapidapi.com"
-        // No "Content-Type" needed for GET with query parameters
     };
 
-    // Construct the full prompt as shown in your Python example
     const fullPrompt = `
 Você é um assistente altamente especializado. Receberá um problema e deverá fornecer uma solução clara e objetiva no formato de um único retorno.
 Instruções:
@@ -32,15 +33,13 @@ Instruções:
 4. Analise os agendamentos disponíveis: [] // Placeholder for agendamentos_str, as we don't have this data here yet.
 5. A ideia de sua resposta é ajudar o usuário a gerenciar os agendamentos, ele irá dar um problema, e você irá receber em conjunto os agendamentos, assim encontrando a melhor forma de resolver o problema do usuário.
 6. Voce nao deve nunca retornar o codigo python, e sim o nome formatado corretamente
-${prompt}
+${userMessage.text}
 `;
 
-    // Encode the prompt for the URL
     const encodedPrompt = encodeURIComponent(fullPrompt);
     const urlWithParams = `${baseUrl}?prompt=${encodedPrompt}`;
 
     try {
-        // Use GET method
         const response = await fetch(urlWithParams, {
             method: 'GET',
             headers: headers,
@@ -50,16 +49,17 @@ ${prompt}
         const data = await response.json();
         console.log('Response Data:', data);
         
+        let aiResponseText;
         if (response.ok) {
-            // Assuming the response structure is { "response": "AI's answer" }
-            setResponse(data.response || 'Não foi possível obter uma resposta válida.');
+            aiResponseText = data.response || 'Não foi possível obter uma resposta válida.';
         } else {
-            // Handle non-200 responses
-            setResponse(`Erro da API: ${data.message || data.error || response.status}`);
+            aiResponseText = `Erro da API: ${data.message || data.error || response.status}`;
         }
+        setMessages(prevMessages => [...prevMessages, { text: aiResponseText, sender: 'ai' }]);
+
     } catch (error) {
         console.error('Erro ao chamar a API:', error);
-        setResponse('Erro ao comunicar com o servidor.');
+        setMessages(prevMessages => [...prevMessages, { text: 'Erro ao comunicar com o servidor.', sender: 'ai' }]);
     } finally {
         setLoading(false);
     }
@@ -69,10 +69,22 @@ ${prompt}
     <KeyboardAvoidingView 
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} // Ajuste conforme necessário
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.responseText}>{response}</Text>
+        {messages.map((message, index) => (
+          <View key={index} style={message.sender === 'user' ? styles.userMessageContainer : styles.aiMessageContainer}>
+            <Text style={message.sender === 'user' ? styles.userMessageText : styles.aiMessageText}>
+              {message.text}
+            </Text>
+          </View>
+        ))}
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#4CAF50" />
+            <Text style={styles.loadingText}>Pensando...</Text>
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.inputContainer}>
@@ -101,10 +113,41 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     padding: 15,
+    justifyContent: 'flex-end',
   },
-  responseText: {
+  userMessageContainer: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#DCF8C6',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 10,
+    maxWidth: '80%',
+  },
+  aiMessageContainer: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#E0E0E0',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 10,
+    maxWidth: '80%',
+  },
+  userMessageText: {
     fontSize: 16,
     color: '#333',
+  },
+  aiMessageText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 10,
+  },
+  loadingText: {
+    marginLeft: 5,
+    color: '#666',
   },
   inputContainer: {
     flexDirection: 'row',

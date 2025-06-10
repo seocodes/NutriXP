@@ -1,10 +1,81 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../services/firebaseConfig';
+import Markdown from 'react-native-markdown-display';
 
 const ChatScreen = () => {
   const [prompt, setPrompt] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [age, setAge] = useState('');
+  const [weight, setWeight] = useState('');
+  const [height, setHeight] = useState('');
+  const [gender, setGender] = useState('');
+  const [fitnessGoal, setFitnessGoal] = useState('');
+  const [dietaryOptions, setDietaryOptions] = useState('');
+  const [allUserData, setAllUserData] = useState({
+    age: '',
+    weight: '',
+    height: '',
+    gender: '',
+    fitnessGoal: '',
+    dietaryOptions: ''
+  });
+
+  const handleSaveProfile = async () => {
+    if (!age || !weight || !height || !gender || !fitnessGoal || !dietaryOptions) {
+      Alert.alert('Erro', 'Por favor, preencha todos os campos.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        await setDoc(doc(db, 'dietas', user.uid), {
+          
+        }; // merge: atualiza o documento existente sem sobrescrever outros campos
+        Alert.alert('Sucesso', 'Seu perfil foi salvo com sucesso!');
+        navigation.replace('MainTabs');
+      } else {
+        Alert.alert('Erro', 'Usuário não autenticado.');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar perfil:', error);
+      Alert.alert('Erro', 'Não foi possível salvar seu perfil. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            console.log(userData)
+            setAllUserData({
+              age: userData.age ? String(userData.age) : '',
+              weight: userData.weight ? String(userData.weight) : '',
+              height: userData.height ? String(userData.height) : '',
+              gender: userData.gender || '',
+              fitnessGoal: userData.fitnessGoal || '',
+              dietaryOptions: userData.dietaryOptions || ''
+            });
+            
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar perfil:', error);
+      }
+    };
+
+    fetchProfileData();
+  }, []);
 
   const handleSend = async () => {
     if (!prompt.trim()) {
@@ -33,8 +104,17 @@ Instruções:
 4. Analise os agendamentos disponíveis: [] // Placeholder for agendamentos_str, as we don't have this data here yet.
 5. A ideia de sua resposta é ajudar o usuário a gerenciar os agendamentos, ele irá dar um problema, e você irá receber em conjunto os agendamentos, assim encontrando a melhor forma de resolver o problema do usuário.
 6. Voce nao deve nunca retornar o codigo python, e sim o nome formatado corretamente
+7. Esses são todos os dados do usuário:
+Idade: ${allUserData.age}
+Peso: ${allUserData.weight}
+Altura: ${allUserData.height}
+Gênero: ${allUserData.gender}
+Objetivo: ${allUserData.fitnessGoal}
+Preferências alimentares: ${allUserData.dietaryOptions}
 ${userMessage.text}
 `;
+
+    console.log(fullPrompt)
 
     const encodedPrompt = encodeURIComponent(fullPrompt);
     const urlWithParams = `${baseUrl}?prompt=${encodedPrompt}`;
@@ -75,7 +155,9 @@ ${userMessage.text}
         {messages.map((message, index) => (
           <View key={index} style={message.sender === 'user' ? styles.userMessageContainer : styles.aiMessageContainer}>
             <Text style={message.sender === 'user' ? styles.userMessageText : styles.aiMessageText}>
+            <Markdown>
               {message.text}
+              </Markdown>
             </Text>
           </View>
         ))}

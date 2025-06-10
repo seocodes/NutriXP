@@ -12,6 +12,7 @@ import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import ChatScreen from './screens/ChatScreen';
+import ProfileSetupScreen from './screens/ProfileSetupScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -27,6 +28,8 @@ function MainTabs() {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'Chat') {
             iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -48,6 +51,13 @@ function MainTabs() {
         component={ChatScreen} 
         options={{
           title: 'Chat',
+        }}
+      />
+      <Tab.Screen
+        name="Profile" 
+        component={ProfileSetupScreen} 
+        options={{
+          title: 'Perfil',
         }}
       />
     </Tab.Navigator>

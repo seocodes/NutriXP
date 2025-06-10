@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebaseConfig';
 import CustomButton from '../components/CustomButton';
@@ -30,6 +30,8 @@ const DashboardScreen = ({ navigation }) => {
           });
 
           try {
+            await enableNetwork(db);
+            
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if (userDoc.exists()) {
               const data = userDoc.data();
@@ -37,6 +39,7 @@ const DashboardScreen = ({ navigation }) => {
               setUserData(data);
             } else {
               console.log('Documento do usuário não encontrado no Firestore');
+              setUserData({ profileCompleted: false });
             }
           } catch (firestoreError) {
             console.error('Erro ao acessar Firestore:', firestoreError);
@@ -44,7 +47,11 @@ const DashboardScreen = ({ navigation }) => {
               'Aviso',
               'Não foi possível acessar alguns dados. Verifique sua conexão com a internet.'
             );
+            setUserData({ profileCompleted: false });
           }
+        } else {
+          setIsLoading(false);
+          setUserData(null);
         }
       } catch (error) {
         console.error('Erro ao buscar dados do usuário:', error);
@@ -52,12 +59,17 @@ const DashboardScreen = ({ navigation }) => {
           'Erro',
           'Ocorreu um erro ao carregar os dados. Por favor, tente novamente.'
         );
+        setUserData(null);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchUserData();
+
+    return () => {
+      disableNetwork(db).catch(console.error);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -75,6 +87,20 @@ const DashboardScreen = ({ navigation }) => {
       <Image source={require('../assets/logo.png')} style={styles.logo} />
       <Text style={styles.welcomeText}>Bem-vindo {userData?.name || 'Carregando...'}!</Text>
       {isLoading && <Text style={styles.loadingText}>Carregando dados...</Text>}
+      
+      {!isLoading && userData && !userData.profileCompleted && (
+        <View style={styles.profilePromptCard}>
+          <Text style={styles.profilePromptText}>
+            Seu perfil está incompleto. Por favor, preencha seus dados para uma experiência personalizada!
+          </Text>
+          <CustomButton
+            title="Completar Perfil"
+            onPress={() => navigation.navigate('Profile')}
+            iconName="account-circle"
+            style={styles.completeProfileButton}
+          />
+        </View>
+      )}
       
       <View style={styles.card}>
     
@@ -138,6 +164,34 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+  },
+  profilePromptCard: {
+    backgroundColor: '#FFD700',
+    borderRadius: 10,
+    padding: 15,
+    width: '100%',
+    marginTop: 10,
+    marginBottom: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  profilePromptText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  completeProfileButton: {
+    backgroundColor: '#F57C00',
+    marginTop: 10,
+    width: '80%',
   },
 });
 

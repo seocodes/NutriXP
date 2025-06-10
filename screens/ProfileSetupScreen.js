@@ -138,17 +138,20 @@ const ProfileSetupScreen = ({ navigation }) => {
         </View>
 
         <TextInput
-          style={styles.input}
+          style={styles.inputLabel}
           placeholder="Objetivo na Academia (ex: Ganhar massa, Emagrecer)"
           value={fitnessGoal}
           onChangeText={setFitnessGoal}
+          multiline={true}
         />
 
         <TextInput
-          style={styles.input}
+          style={styles.inputLabel}
           placeholder="Opções Alimentares (ex: Vegetariano, Sem glúten)"
           value={dietaryOptions}
           onChangeText={setDietaryOptions}
+          multiline={true}
+
         />
 
         <CustomButton
@@ -193,6 +196,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     width: '100%',
   },
+  inputLabel: {
+    backgroundColor: '#f5f5f5',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 15,
+    fontSize: 16,
+    width: '100%',
+    height: 120,
+    textAlignVertical: 'top', // CORRETO para alinhar texto no topo
+  },  
   label: {
     fontSize: 16,
     color: '#333',

@@ -7,6 +7,7 @@ import { doc, getDoc, enableNetwork, disableNetwork, collection, query, orderBy,
 import { db } from '../services/firebaseConfig';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Modal } from 'react-native';
+import Markdown from 'react-native-markdown-display';
 
 const Tab = createBottomTabNavigator();
 
@@ -187,7 +188,11 @@ const DashboardScreen = ({ navigation }) => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Mensagem Completa</Text>
             <ScrollView>
-              <Text style={styles.modalText}>{selectedMessage?.text || selectedMessage?.content}</Text>
+                <Text style={styles.modalText}>
+                <Markdown>
+                  {selectedMessage?.text || selectedMessage?.content}
+                  </Markdown>
+                  </Text>
             </ScrollView>
             <CustomButton title="Fechar" onPress={() => setModalVisible(false)} />
           </View>

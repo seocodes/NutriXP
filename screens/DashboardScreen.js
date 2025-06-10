@@ -138,7 +138,7 @@ const DashboardScreen = ({ navigation }) => {
   return (
     <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.container}>
       <Image source={require('../assets/logo.png')} style={styles.logo} />
-      <Text style={styles.welcomeText}>Bem-vindo {userData?.name || 'Carregando...'}!</Text>
+      <Text style={styles.welcomeText}>Bem-vindo {auth.currentUser?.emailname || 'Carregando...'}!</Text>
       {isLoading && <Text style={styles.loadingText}>Carregando dados...</Text>}
 
       {!isLoading && userData && !userData.profileCompleted && (

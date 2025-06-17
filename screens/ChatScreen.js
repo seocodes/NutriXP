@@ -29,11 +29,11 @@ const ChatScreen = () => {
       try {
         const user = auth.currentUser;
         if (user) {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const userDoc = await getDoc(doc(db, 'users', user.uid)); // pega os dados do usuario no db
           if (userDoc.exists()) {
             const userData = userDoc.data();
             console.log(userData)
-            setAllUserData({
+            setAllUserData({ // salva num state
               age: userData.age ? String(userData.age) : '',
               weight: userData.weight ? String(userData.weight) : '',
               height: userData.height ? String(userData.height) : '',
@@ -54,13 +54,13 @@ const ChatScreen = () => {
 
   useEffect(() => {
     const user = auth.currentUser;
-    if (user) {
+    if (user) { // faz a querie pro db de todas as mensagens caso tenha user
       const q = query(collection(db, 'chatMessages'), orderBy('timestamp'));
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const fetchedMessages = [];
         snapshot.forEach((doc) => {
           // apenas add mensagens do proprio user
-          if (doc.data().userId === user.uid) {
+          if (doc.data().userId === user.uid) { // aqui ele pega todas as mensagens DO USUARIO authenticado
             fetchedMessages.push(doc.data());
           }
         });
@@ -88,7 +88,7 @@ const ChatScreen = () => {
     const userMessage = {
       text: prompt,
       sender: 'user',
-      userId: user.uid, 
+      userId: user.uid,
       timestamp: serverTimestamp(),
     };
 
@@ -98,7 +98,7 @@ const ChatScreen = () => {
     } catch (firestoreError) {
       console.error('Erro ao salvar mensagem do usuário no Firestore:', firestoreError);
       Alert.alert('Erro', 'Não foi possível enviar sua mensagem. Tente novamente.');
-      setLoading(false); 
+      setLoading(false);
       return;
     }
 
@@ -112,18 +112,18 @@ const ChatScreen = () => {
     };
 
     const fullPrompt = `
-Você é um assistente altamente especializado. Voce é um nutricionista com mais de 10 anos de experiencia e deve ajudar o usuario a encontrar a melhor dieta de acordo com seus dados:
-1. Analise o problema descrito.
-2. Resolva de forma direta e clara
-3. Voce deve focar em resolver o problema do cliente
-4. Segue os dados: 
-Idade: ${allUserData.age}
-Peso: ${allUserData.weight}
-Altura: ${allUserData.height}
-Gênero: ${allUserData.gender}
-Objetivo: ${allUserData.fitnessGoal}
-Preferências alimentares: ${allUserData.dietaryOptions}
-${userMessage.text}
+        Você é um assistente altamente especializado em fazer dietas. Voce é um nutricionista com mais de 10 anos de experiencia e deve ajudar o usuario a encontrar a melhor dieta de acordo com seus dados:
+        1. Analise o problema descrito.
+        2. Resolva de forma direta e clara
+        3. Voce deve focar em resolver o problema do cliente
+        4. Segue os dados: 
+        Idade: ${allUserData.age}
+        Peso: ${allUserData.weight}
+        Altura: ${allUserData.height}
+        Gênero: ${allUserData.gender}
+        Objetivo: ${allUserData.fitnessGoal}
+        Preferências alimentares: ${allUserData.dietaryOptions}
+        ${userMessage.text}
 `;
 
     console.log(fullPrompt)
@@ -150,8 +150,8 @@ ${userMessage.text}
       const aiMessage = {
         text: aiResponseText,
         sender: 'ai',
-        userId: user.uid, 
-        timestamp: serverTimestamp(), 
+        userId: user.uid,
+        timestamp: serverTimestamp(),
       };
 
       // adciona a mensagem pro db
@@ -182,7 +182,7 @@ ${userMessage.text}
           <View key={index} style={message.sender === 'user' ? styles.userMessageContainer : styles.aiMessageContainer}>
             <Text style={message.sender === 'user' ? styles.userMessageText : styles.aiMessageText}>
               <Markdown>
-              {message.text}
+                {message.text}
               </Markdown>
             </Text>
           </View>

@@ -103,7 +103,7 @@ const DashboardScreen = ({ navigation }) => {
       });
       return () => unsubscribe();
     }
-  // eslint-disable-next-line
+    // eslint-disable-next-line
   }, [showHidden]);
 
   const handleLogout = async () => {
@@ -157,24 +157,43 @@ const DashboardScreen = ({ navigation }) => {
       <Text style={styles.messageText} numberOfLines={2}>
         {message.text || message.content || 'Mensagem sem texto'}
       </Text>
-      <Text style={styles.messageDate}>
+      <View><Text style={styles.messageDate}>
         {formatDate(message.timestamp)}
       </Text>
-      {showHidden ? (
-        <CustomButton
-          title="Restaurar"
-          iconName="undo"
-          style={{backgroundColor:'#4CAF50', marginTop: 8, width: '60%'}}
-          onPress={() => { setMessageToHide(message); setHideModalVisible(true); }}
-        />
-      ) : (
-        <CustomButton
-          title="Ocultar"
-          iconName="visibility-off"
-          style={{backgroundColor:'#f44336', marginTop: 8, width: '60%'}}
-          onPress={() => { setMessageToHide(message); setHideModalVisible(true); }}
-        />
-      )}
+        {showHidden ? (
+          <CustomButton
+          title={"Restaurar"}
+            iconName="undo"
+            color="#666"
+            style={{
+              backgroundColor: 'transparent',
+              marginTop: 8,
+              padding: 12,
+              borderRadius: 20,
+              minWidth: 45,
+              minHeight: 45,
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onPress={() => { setMessageToHide(message); setHideModalVisible(true); }}
+          />
+        ) : (
+          <CustomButton
+            iconName="visibility-off"
+            color="#666"
+            style={{
+              backgroundColor: 'transparent',
+              marginTop: 8,
+              padding: 12,
+              borderRadius: 20,
+              minWidth: 45,
+              minHeight: 45,
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onPress={() => { setMessageToHide(message); setHideModalVisible(true); }}
+          />
+        )}</View>
     </TouchableOpacity>
   );
 
@@ -201,11 +220,11 @@ const DashboardScreen = ({ navigation }) => {
         </View>
       )}
 
-      <View style={{flexDirection:'row', justifyContent:'flex-end', width:'100%', marginBottom: 8}}>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '100%', marginBottom: 8 }}>
         <CustomButton
           title={showHidden ? 'Ver recentes' : 'Ver ocultas'}
           iconName={showHidden ? 'visibility' : 'visibility-off'}
-          style={{backgroundColor:'#2196F3', width: 160, height: 40, marginBottom: 0}}
+          style={{ backgroundColor: '#2196F3', width: 200, height: 60, marginBottom: 0 }}
           onPress={() => setShowHidden(!showHidden)}
         />
       </View>
@@ -244,11 +263,11 @@ const DashboardScreen = ({ navigation }) => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Mensagem Completa</Text>
             <ScrollView>
-                <Text style={styles.modalText}>
+              <Text style={styles.modalText}>
                 <Markdown>
                   {selectedMessage?.text || selectedMessage?.content}
-                  </Markdown>
-                  </Text>
+                </Markdown>
+              </Text>
             </ScrollView>
             <CustomButton title="Fechar" onPress={() => setModalVisible(false)} />
           </View>
@@ -263,7 +282,7 @@ const DashboardScreen = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{showHidden ? 'Restaurar mensagem?' : 'Ocultar mensagem?'}</Text>
-            <Text style={{marginBottom: 16}}>
+            <Text style={{ marginBottom: 16 }}>
               {showHidden
                 ? 'Tem certeza que deseja restaurar esta mensagem para o dashboard?'
                 : 'Tem certeza que deseja ocultar esta mensagem do dashboard? Ela continuará visível no chat.'}
@@ -272,13 +291,13 @@ const DashboardScreen = ({ navigation }) => {
               title="Confirmar"
               iconName="check"
               onPress={showHidden ? handleRestoreMessage : handleHideMessage}
-              style={{backgroundColor:'#4CAF50'}}
+              style={{ backgroundColor: '#4CAF50' }}
             />
             <CustomButton
               title="Cancelar"
               iconName="close"
               onPress={() => setHideModalVisible(false)}
-              style={{backgroundColor:'#f44336'}}
+              style={{ backgroundColor: '#f44336' }}
             />
           </View>
         </View>
@@ -384,6 +403,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderLeftWidth: 3,
     borderLeftColor: '#4CAF50',
+    flexDirection: 'row',
   },
   messageText: {
     fontSize: 14,

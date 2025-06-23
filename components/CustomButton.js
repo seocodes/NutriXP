@@ -12,6 +12,7 @@ const CustomButton = ({
   title,
   onPress,
   iconName,
+  color,
   disabled = false,
   style,
   loading = false,
@@ -35,7 +36,7 @@ const CustomButton = ({
               <MaterialIcons
                 name={iconName}
                 size={24}
-                color="#fff"
+                color={color || '#fff'}
                 style={styles.icon}
               />
             )}
@@ -53,14 +54,14 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     marginBottom: 15,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    // elevation: 2,
+    // shadowColor: '#000',
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 2,
+    // },
+    // shadowOpacity: 0.25,
+    // shadowRadius: 3.84,
   },
   buttonContent: {
     flexDirection: 'row',

@@ -42,6 +42,7 @@ const RegisterScreen = ({ navigation }) => {
         name: name,
         createdAt: serverTimestamp(),
         profileCompleted: false,
+        credits: 10,
       });
 
       Alert.alert(

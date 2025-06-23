@@ -23,6 +23,7 @@ const ChatScreen = () => {
     fitnessGoal: '',
     dietaryOptions: ''
   });
+  const [userCredits, setUserCredits] = useState(0);
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -73,15 +74,40 @@ const ChatScreen = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const fetchCredits = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserCredits(userData.credits || 0);
+        }
+      }
+    };
+    fetchCredits();
+  }, []);
+
   const handleSend = async () => {
     if (!prompt.trim()) {
       Alert.alert('Por favor', 'Digite uma pergunta antes de enviar.');
       return;
     }
-
+    if (userCredits <= 0) {
+      Alert.alert('Sem créditos', 'Você não tem créditos suficientes. Compre mais créditos na tela de perfil.');
+      return;
+    }
     const user = auth.currentUser;
     if (!user) {
       Alert.alert('Erro', 'Usuário não autenticado. Por favor, faça login novamente.');
+      return;
+    }
+    // Decrementa crédito
+    try {
+      await setDoc(doc(db, 'users', user.uid), { credits: userCredits - 1 }, { merge: true });
+      setUserCredits(userCredits - 1);
+    } catch (e) {
+      Alert.alert('Erro', 'Não foi possível atualizar seus créditos.');
       return;
     }
 
@@ -90,6 +116,7 @@ const ChatScreen = () => {
       sender: 'user',
       userId: user.uid,
       timestamp: serverTimestamp(),
+      visibleInDashboard: true,
     };
 
     // Add mensagem do user no db
@@ -152,6 +179,7 @@ const ChatScreen = () => {
         sender: 'ai',
         userId: user.uid,
         timestamp: serverTimestamp(),
+        visibleInDashboard: true,
       };
 
       // adciona a mensagem pro db
@@ -208,6 +236,10 @@ const ChatScreen = () => {
           onPress={handleSend}
           disabled={loading}
         />
+      </View>
+
+      <View style={styles.creditsContainer}>
+        <Text style={styles.creditsText}>Créditos: {userCredits}</Text>
       </View>
     </KeyboardAvoidingView>
   );
@@ -272,6 +304,18 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     backgroundColor: '#fff',
+  },
+  creditsContainer: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderColor: '#eee',
+  },
+  creditsText: {
+    fontSize: 16,
+    color: '#4CAF50',
+    fontWeight: 'bold',
   },
 });
 

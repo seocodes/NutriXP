@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Alert, Image, TouchableOpacity, ScrollView } fr
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebaseConfig';
 import CustomButton from '../components/CustomButton';
-import { doc, getDoc, enableNetwork, disableNetwork, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, enableNetwork, disableNetwork, collection, query, orderBy, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../services/firebaseConfig';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Modal } from 'react-native';
@@ -17,6 +17,8 @@ const DashboardScreen = ({ navigation }) => {
   const [messages, setMessages] = useState([]);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [hideModalVisible, setHideModalVisible] = useState(false);
+  const [messageToHide, setMessageToHide] = useState(null);
 
   // aqui ele vai pegar os dados do usuário quando ele entrar na tela de acordo com o auth e o firestore
   useEffect(() => {
@@ -82,22 +84,20 @@ const DashboardScreen = ({ navigation }) => {
     if (user) {
       const q = query(
         collection(db, 'chatMessages'),
-        orderBy('timestamp', 'desc') // ordenar por mais recente primeiro
+        orderBy('timestamp', 'desc')
       );
-
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const fetchedMessages = [];
-        snapshot.forEach((doc) => {
-          // apenas add mensagens do próprio user
-          if (doc.data().userId === user.uid) {
-            fetchedMessages.push({ id: doc.id, ...doc.data() });
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data.userId === user.uid && (data.visibleInDashboard !== false)) {
+            fetchedMessages.push({ id: docSnap.id, ...data });
           }
         });
-        setMessages(fetchedMessages.slice(0, 5)); // limitar a 5 mensagens mais recentes
+        setMessages(fetchedMessages.slice(0, 5));
       }, (error) => {
         console.error("Error fetching chat messages:", error);
       });
-
       return () => unsubscribe();
     }
   }, []);
@@ -124,7 +124,19 @@ const DashboardScreen = ({ navigation }) => {
     });
   };
 
-  const MessageCard = ({ message, onPress }) => (
+  const handleHideMessage = async () => {
+    if (messageToHide) {
+      try {
+        await updateDoc(doc(db, 'chatMessages', messageToHide.id), { visibleInDashboard: false });
+        setHideModalVisible(false);
+        setMessageToHide(null);
+      } catch (e) {
+        Alert.alert('Erro', 'Não foi possível ocultar a mensagem.');
+      }
+    }
+  };
+
+  const MessageCard = ({ message, onPress, onHide }) => (
     <TouchableOpacity onPress={() => onPress(message)} style={styles.messageCard}>
       <Text style={styles.messageText} numberOfLines={2}>
         {message.text || message.content || 'Mensagem sem texto'}
@@ -132,6 +144,12 @@ const DashboardScreen = ({ navigation }) => {
       <Text style={styles.messageDate}>
         {formatDate(message.timestamp)}
       </Text>
+      <CustomButton
+        title="Ocultar"
+        iconName="visibility-off"
+        style={{backgroundColor:'#f44336', marginTop: 8, width: '60%'}}
+        onPress={() => { setMessageToHide(message); setHideModalVisible(true); }}
+      />
     </TouchableOpacity>
   );
 
@@ -169,6 +187,7 @@ const DashboardScreen = ({ navigation }) => {
                   setSelectedMessage(msg);
                   setModalVisible(true);
                 }}
+                onHide={() => { setMessageToHide(message); setHideModalVisible(true); }}
               />
             ) : null
           )
@@ -195,6 +214,21 @@ const DashboardScreen = ({ navigation }) => {
                   </Text>
             </ScrollView>
             <CustomButton title="Fechar" onPress={() => setModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={hideModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setHideModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Ocultar mensagem?</Text>
+            <Text style={{marginBottom: 16}}>Tem certeza que deseja ocultar esta mensagem do dashboard? Ela continuará visível no chat.</Text>
+            <CustomButton title="Confirmar" iconName="check" onPress={handleHideMessage} style={{backgroundColor:'#4CAF50'}} />
+            <CustomButton title="Cancelar" iconName="close" onPress={() => setHideModalVisible(false)} style={{backgroundColor:'#f44336'}} />
           </View>
         </View>
       </Modal>

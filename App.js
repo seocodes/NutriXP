@@ -13,6 +13,7 @@ import RegisterScreen from './screens/RegisterScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import ChatScreen from './screens/ChatScreen';
 import ProfileSetupScreen from './screens/ProfileSetupScreen';
+import PaymentScreen from './screens/PaymentScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -116,6 +117,7 @@ export default function App() {
             ),
           })}
         />
+        <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: 'Comprar Créditos' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -18,23 +18,21 @@ const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   //func p logar c o firebase
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos');
+      setErrorMsg('Por favor, preencha todos os campos');
       return;
     }
-
     setLoading(true);
+    setErrorMsg('');
     try {
-      console.log('Tentando fazer login...');
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log('Login bem sucedido:', userCredential);
+      await signInWithEmailAndPassword(auth, email, password);
       navigation.navigate('MainTabs');
     } catch (error) {
-      console.error('Erro no login:', error);
-      Alert.alert('Erro', 'Email ou senha inválidos');
+      setErrorMsg('Email ou senha incorretos');
     } finally {
       setLoading(false);
     }
@@ -50,6 +48,9 @@ const LoginScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.formContainer}>
+        {errorMsg ? (
+          <Text style={styles.errorText}>{errorMsg}</Text>
+        ) : null}
         <TextInput
           style={styles.input}
           placeholder="Email"
@@ -124,6 +125,13 @@ const styles = StyleSheet.create({
   },
   registerButton: {
     backgroundColor: '#2196F3',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 15,
+    marginBottom: 10,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
 });
 

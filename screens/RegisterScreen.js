@@ -7,6 +7,7 @@ import {
   Platform,
   Alert,
   ScrollView,
+  Text,
 } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -19,24 +20,21 @@ const RegisterScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const handleRegister = async () => {
-    if (!email || !password || !confirmPassword) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos');
+    if (!name || !email || !password || !confirmPassword) {
+      setErrorMsg('Por favor, preencha todos os campos');
       return;
     }
-
     if (password !== confirmPassword) {
-      Alert.alert('Erro', 'As senhas não coincidem');
+      setErrorMsg('As senhas não coincidem');
       return;
     }
-
     setLoading(true);
+    setErrorMsg('');
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log(userCredential);
-
-      // cria o doc do user no firestore
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email: email,
         name: name,
@@ -44,7 +42,6 @@ const RegisterScreen = ({ navigation }) => {
         profileCompleted: false,
         credits: 10,
       });
-
       Alert.alert(
         'Sucesso!',
         'Conta criada com sucesso! Você será redirecionado para a tela de login.',
@@ -62,8 +59,7 @@ const RegisterScreen = ({ navigation }) => {
       } else if (error.code === 'auth/weak-password') {
         errorMessage = 'A senha deve ter pelo menos 6 caracteres';
       }
-      Alert.alert('Erro', errorMessage);
-      console.error(error);
+      setErrorMsg(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -75,7 +71,10 @@ const RegisterScreen = ({ navigation }) => {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.formContainer}>
-        <TextInput
+          {errorMsg ? (
+            <Text style={styles.errorText}>{errorMsg}</Text>
+          ) : null}
+          <TextInput
             style={styles.input}
             placeholder="Seu nome"
             value={name}
@@ -147,6 +146,13 @@ const styles = StyleSheet.create({
   },
   backButton: {
     backgroundColor: '#666',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 15,
+    marginBottom: 10,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
 });
 

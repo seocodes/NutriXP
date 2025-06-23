@@ -19,6 +19,7 @@ const DashboardScreen = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [hideModalVisible, setHideModalVisible] = useState(false);
   const [messageToHide, setMessageToHide] = useState(null);
+  const [showHidden, setShowHidden] = useState(false);
 
   // aqui ele vai pegar os dados do usuário quando ele entrar na tela de acordo com o auth e o firestore
   useEffect(() => {
@@ -90,7 +91,9 @@ const DashboardScreen = ({ navigation }) => {
         const fetchedMessages = [];
         snapshot.forEach((docSnap) => {
           const data = docSnap.data();
-          if (data.userId === user.uid && (data.visibleInDashboard !== false)) {
+          if (data.userId === user.uid && (
+            showHidden ? data.visibleInDashboard === false : data.visibleInDashboard !== false
+          )) {
             fetchedMessages.push({ id: docSnap.id, ...data });
           }
         });
@@ -100,7 +103,8 @@ const DashboardScreen = ({ navigation }) => {
       });
       return () => unsubscribe();
     }
-  }, []);
+  // eslint-disable-next-line
+  }, [showHidden]);
 
   const handleLogout = async () => {
     try {
@@ -136,7 +140,19 @@ const DashboardScreen = ({ navigation }) => {
     }
   };
 
-  const MessageCard = ({ message, onPress, onHide }) => (
+  const handleRestoreMessage = async () => {
+    if (messageToHide) {
+      try {
+        await updateDoc(doc(db, 'chatMessages', messageToHide.id), { visibleInDashboard: true });
+        setHideModalVisible(false);
+        setMessageToHide(null);
+      } catch (e) {
+        Alert.alert('Erro', 'Não foi possível restaurar a mensagem.');
+      }
+    }
+  };
+
+  const MessageCard = ({ message, onPress, onHide, onRestore }) => (
     <TouchableOpacity onPress={() => onPress(message)} style={styles.messageCard}>
       <Text style={styles.messageText} numberOfLines={2}>
         {message.text || message.content || 'Mensagem sem texto'}
@@ -144,12 +160,21 @@ const DashboardScreen = ({ navigation }) => {
       <Text style={styles.messageDate}>
         {formatDate(message.timestamp)}
       </Text>
-      <CustomButton
-        title="Ocultar"
-        iconName="visibility-off"
-        style={{backgroundColor:'#f44336', marginTop: 8, width: '60%'}}
-        onPress={() => { setMessageToHide(message); setHideModalVisible(true); }}
-      />
+      {showHidden ? (
+        <CustomButton
+          title="Restaurar"
+          iconName="undo"
+          style={{backgroundColor:'#4CAF50', marginTop: 8, width: '60%'}}
+          onPress={() => { setMessageToHide(message); setHideModalVisible(true); }}
+        />
+      ) : (
+        <CustomButton
+          title="Ocultar"
+          iconName="visibility-off"
+          style={{backgroundColor:'#f44336', marginTop: 8, width: '60%'}}
+          onPress={() => { setMessageToHide(message); setHideModalVisible(true); }}
+        />
+      )}
     </TouchableOpacity>
   );
 
@@ -157,8 +182,10 @@ const DashboardScreen = ({ navigation }) => {
   return (
     <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.container}>
       <Image source={require('../assets/logo.png')} style={styles.logo} />
-      <Text style={styles.welcomeText}>Bem-vindo {auth.currentUser?.emailname || 'Carregando...'}!</Text>
-      {isLoading && <Text style={styles.loadingText}>Carregando dados...</Text>}
+      <Text style={styles.welcomeText}>
+        Bem-vindo {userData?.name ? userData.name : (auth.currentUser?.email || '')}!
+      </Text>
+      {isLoading && messages.length === 0 && <Text style={styles.loadingText}>Carregando dados...</Text>}
 
       {!isLoading && userData && !userData.profileCompleted && (
         <View style={styles.profilePromptCard}>
@@ -174,6 +201,15 @@ const DashboardScreen = ({ navigation }) => {
         </View>
       )}
 
+      <View style={{flexDirection:'row', justifyContent:'flex-end', width:'100%', marginBottom: 8}}>
+        <CustomButton
+          title={showHidden ? 'Ver recentes' : 'Ver ocultas'}
+          iconName={showHidden ? 'visibility' : 'visibility-off'}
+          style={{backgroundColor:'#2196F3', width: 160, height: 40, marginBottom: 0}}
+          onPress={() => setShowHidden(!showHidden)}
+        />
+      </View>
+
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Atividade recente</Text>
 
@@ -188,11 +224,12 @@ const DashboardScreen = ({ navigation }) => {
                   setModalVisible(true);
                 }}
                 onHide={() => { setMessageToHide(message); setHideModalVisible(true); }}
+                onRestore={() => { setMessageToHide(message); setHideModalVisible(true); }}
               />
             ) : null
           )
         ) : (
-          <Text style={styles.cardText}>Nenhuma atividade recente</Text>
+          <Text style={styles.cardText}>Nenhuma atividade {showHidden ? 'oculta' : 'recente'}</Text>
         )}
 
 
@@ -225,10 +262,24 @@ const DashboardScreen = ({ navigation }) => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Ocultar mensagem?</Text>
-            <Text style={{marginBottom: 16}}>Tem certeza que deseja ocultar esta mensagem do dashboard? Ela continuará visível no chat.</Text>
-            <CustomButton title="Confirmar" iconName="check" onPress={handleHideMessage} style={{backgroundColor:'#4CAF50'}} />
-            <CustomButton title="Cancelar" iconName="close" onPress={() => setHideModalVisible(false)} style={{backgroundColor:'#f44336'}} />
+            <Text style={styles.modalTitle}>{showHidden ? 'Restaurar mensagem?' : 'Ocultar mensagem?'}</Text>
+            <Text style={{marginBottom: 16}}>
+              {showHidden
+                ? 'Tem certeza que deseja restaurar esta mensagem para o dashboard?'
+                : 'Tem certeza que deseja ocultar esta mensagem do dashboard? Ela continuará visível no chat.'}
+            </Text>
+            <CustomButton
+              title="Confirmar"
+              iconName="check"
+              onPress={showHidden ? handleRestoreMessage : handleHideMessage}
+              style={{backgroundColor:'#4CAF50'}}
+            />
+            <CustomButton
+              title="Cancelar"
+              iconName="close"
+              onPress={() => setHideModalVisible(false)}
+              style={{backgroundColor:'#f44336'}}
+            />
           </View>
         </View>
       </Modal>

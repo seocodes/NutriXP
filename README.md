@@ -1,6 +1,6 @@
 # 🥗 NutriXP
 
-Aplicativo mobile inteligente focado em dietas personalizadas e saúde alimentar com integração de IA, pagamentos via Stripe e armazenamento seguro com Firebase.
+Aplicativo mobile inteligente focado em dietas personalizadas e saúde alimentar com integração de IA e armazenamento seguro com Firebase.
 
 <!-- Substitua pelo link do seu banner -->
 
@@ -54,18 +54,7 @@ export const firebaseConfig = {
 };
 ```
 
-### 4. Configure o Stripe
-
-1. Crie uma conta em [Stripe](https://stripe.com/).
-2. Obtenha sua chave pública de teste.
-3. Substitua no arquivo `stripeConfig.ts`:
-
-```javascript
-// src/config/stripeConfig.js
-export const STRIPE_PUBLISHABLE_KEY = 'SUA_CHAVE_PÚBLICA_DE_TESTE';
-```
-
-### 5. Configure as funções do Firebase (opcional)
+### 4. Configure as funções do Firebase (opcional)
 
 Se estiver utilizando Firebase Cloud Functions para processar pagamentos:
 
@@ -83,7 +72,7 @@ firebase init functions
 
 3. Implemente as funções necessárias para processar pagamentos com Stripe.
 
-### 6. Execute o aplicativo
+### 5. Execute o aplicativo
 
 ```bash
 npx react-native run-android

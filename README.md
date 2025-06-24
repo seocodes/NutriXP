@@ -6,14 +6,13 @@ Aplicativo mobile inteligente focado em dietas personalizadas e saúde alimentar
 
 ## 📲 Visão Geral
 
-O NutriXP é um aplicativo desenvolvido com React Native que utiliza Inteligência Artificial para criar planos alimentares personalizados e promover uma alimentação saudável. Com integração ao Firebase para autenticação e armazenamento de dados, e Stripe para processamento de pagamentos, o NutriXP oferece uma experiência completa e segura para usuários que buscam melhorar seus hábitos alimentares e qualidade de vida através da nutrição.
+O NutriXP é um aplicativo desenvolvido com React Native que utiliza Inteligência Artificial para criar planos alimentares personalizados e promover uma alimentação saudável. Com integração ao Firebase para autenticação e armazenamento de dados, o NutriXP oferece uma experiência completa e segura para usuários que buscam melhorar seus hábitos alimentares e qualidade de vida através da nutrição.
 
 ## 🚀 Tecnologias Utilizadas
 
 - React Native
 - Firebase Authentication
 - Cloud Firestore
-- Stripe React Native SDK
 - Firebase Cloud Functions
 - JavaScritp
 
@@ -92,16 +91,6 @@ npx react-native run-android
 npx react-native run-ios
 ```
 
-## 💳 Integração com Stripe
-
-O NutriXP utiliza o Stripe React Native SDK para processar pagamentos de forma segura. A integração permite:
-
-- Aceitar pagamentos com cartão de crédito/débito
-- Gerenciar assinaturas e pagamentos recorrentes
-- Utilizar o PaymentSheet para uma experiência de checkout simplificada
-
-Para mais detalhes sobre a integração, consulte a [documentação oficial do Stripe](https://stripe.com/docs).
-
 ## 📁 Estrutura do Projeto
 
 ```
@@ -126,7 +115,6 @@ NutriXP/
 - Acompanhamento de progresso nutricional
 - Calculadora de macronutrientes e calorias
 - Banco de dados de alimentos e receitas saudáveis
-- Processamento de pagamentos com Stripe
 - Armazenamento seguro de dados no Firestore
 
 ## 🛠️ Contribuindo

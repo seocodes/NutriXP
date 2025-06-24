@@ -131,7 +131,6 @@ Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou enviar
 
 - [Repositório](https://github.com/seocodes/NutriXP)
 - [Documentação do Firebase](https://firebase.google.com/docs)
-- [Documentação do Stripe](https://stripe.com/docs)
 
 ---
 
